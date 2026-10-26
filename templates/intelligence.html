@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Intelligence Division | CyberNews Tracker{% endblock %}
+
+{% block content %}
+<section class="intel-page" aria-labelledby="intel-heading">
+    <p class="intel-eyebrow">CYBERNEWS / INTELLIGENCE DIVISION</p>
+    <h2 id="intel-heading">Intelligence Division</h2>
+    <p class="intel-intro">Signed in as <strong>{{ username }}</strong> ({{ role }}).
+       Intelligence API access requires a separate Bearer token.</p>
+
+    <button type="button" class="primary-button" id="fetchIntelligence">
+        Fetch Intelligence
+    </button>
+
+    <p id="intelStatus" role="status" aria-live="polite">
+        Enter an API token when prompted to load a report.
+    </p>
+
+    <div id="intelReports" aria-live="polite" aria-label="Fetched intelligence reports"></div>
+</section>
+
+<style>
+    .intel-page { max-width: 900px; margin: 0 auto; }
+    .intel-eyebrow { font: 700 12px monospace; letter-spacing: 2px; color: var(--accent); }
+    .intel-intro, #intelStatus { color: var(--muted); }
+    #fetchIntelligence { cursor: pointer; }
+    #intelReports { display: grid; gap: 18px; margin-top: 22px; }
+    .intel-report {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 12px; padding: 25px; text-align: left;
+        overflow-wrap: anywhere;
+    }
+    .intel-report h3 { margin-top: 0; }
+    .intel-report small { color: var(--muted); }
+    .intel-report li { margin-bottom: 7px; }
+</style>
+
+<script>
+(() => {
+    const button = document.getElementById("fetchIntelligence");
+    const container = document.getElementById("intelReports");
+    const status = document.getElementById("intelStatus");
+
+    function makeElement(tag, content, className) {
+        const element = document.createElement(tag);
+        element.textContent = String(content || "");
+        if (className) element.className = className;
+        return element;
+    }
+
+    function addReport(data) {
+        const report = document.createElement("article");
+        report.className = "intel-report";
+        report.appendChild(makeElement("h3", data.report.title));
+        report.appendChild(makeElement("small",
+            `${data.report.classification} · ${data.role} token · ${data.generated_at}`));
+        report.appendChild(makeElement("p", data.report.summary));
+
+        const findings = document.createElement("ul");
+        for (const item of data.report.findings) {
+            findings.appendChild(makeElement("li", item));
+        }
+        report.appendChild(findings);
+        container.appendChild(report); // Append; do not erase earlier reports.
+    }
+
+    button.addEventListener("click", async () => {
+        const token = prompt("Enter your Intelligence API Bearer token:");
+        if (token === null) return; // User cancelled.
+        if (!token.trim()) {
+            alert("Access Denied: Bearer token required.");
+            return;
+        }
+
+        button.disabled = true;
+        status.textContent = "Fetching intelligence...";
+
+        try {
+            const response = await fetch("{{ url_for('intelligence_feed') }}", {
+                method: "GET",
+                headers: { "Authorization": `Bearer ${token.trim()}`,
+                           "Accept": "application/json" },
+                credentials: "omit", // API authenticates only the Bearer token.
+                cache: "no-store"
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || `Access Denied (HTTP ${response.status})`);
+            }
+            addReport(data);
+            status.textContent = "Intelligence report added. Fetch again to append another.";
+        } catch (error) {
+            status.textContent = "Intelligence request failed.";
+            alert(error.message || "Access Denied: Unable to fetch intelligence.");
+        } finally {
+            button.disabled = false;
+        }
+    });
+})();
+</script>
+{% endblock %}

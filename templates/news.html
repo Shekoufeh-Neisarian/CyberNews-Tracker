@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Explore News | CyberNews Tracker{% endblock %}
+{% block content %}
+<section class="explore-page" aria-labelledby="explore-title">
+    <div class="explore-hero">
+      <!-- Decorative cyber-intelligence artwork, not live threat telemetry. -->
+      <img class="explore-hero-art" src="{{ url_for('static', filename='images/cyber-hero.svg') }}"
+           alt="" aria-hidden="true" loading="eager" decoding="async">
+      <div class="explore-hud-label explore-hud-left" aria-hidden="true">
+        <span>CYBERNEWS / INTELLIGENCE</span><span>RSS FEEDS · SECURITY RESEARCH</span><span>NEWS ANALYSIS · OPEN SOURCES</span>
+      </div>
+      <div class="explore-hud-label explore-hud-right" aria-hidden="true">
+        <span>THREAT COVERAGE</span><span>CYBER / GLOBAL</span><span>LIVE PUBLISHER FEEDS</span>
+      </div>
+    <div class="explore-head">
+        <div>
+            <span class="explore-kicker"><span class="pulse-live-dot" aria-hidden="true"></span> CYBERNEWS / EXPLORE</span>
+            <h1 id="explore-title">Stay ahead of the <em>story.</em></h1>
+            <p>Browse cybersecurity coverage, filter what matters, and save useful reading for later.</p>
+        </div>
+        <div class="explore-head-actions">
+            <a class="explore-saved-link" href="{{ url_for('bookmarks_page') }}">☆ Saved articles <span aria-hidden="true">↗</span></a>
+            <button id="liveNewsRefreshButton" type="button" class="explore-fetch-button">↻ Refresh RSS</button>
+        </div>
+    </div>
+
+    <div class="explore-tools" id="news-search">
+        <label class="explore-search-label" for="newsSearchInput">
+            <span aria-hidden="true">⌕</span>
+            <input type="search" id="newsSearchInput" placeholder="Search headlines or sources…" autocomplete="off">
+        </label>
+        <div class="explore-filters" id="newsCategoryFilters" aria-label="Filter articles by category">
+            <button type="button" class="explore-filter active" data-category="all" aria-pressed="true">All</button>
+            <button type="button" class="explore-filter" data-category="vulnerabilities" aria-pressed="false">Vulnerabilities</button>
+            <button type="button" class="explore-filter" data-category="ransomware" aria-pressed="false">Ransomware</button>
+            <button type="button" class="explore-filter" data-category="malware" aria-pressed="false">Malware</button>
+            <button type="button" class="explore-filter" data-category="breaches" aria-pressed="false">Data Breaches</button>
+            <button type="button" class="explore-filter" data-category="ai" aria-pressed="false">AI Security</button>
+        </div>
+    </div>
+
+    </div>
+
+    <div class="explore-news-body">
+    <div class="explore-list-title">
+        <div><span class="list-title-rule"></span> THE NEWS WIRE</div>
+        <span id="newsResultsCount">Discover what's happening</span>
+    </div>
+    <p id="newsStatus" class="explore-status" role="status" aria-live="polite">Loading publisher RSS articles…</p>
+    <ul id="headlinesContainer" class="explore-news-grid" aria-label="News articles"></ul>
+    <p id="newsEmptyState" class="explore-empty" hidden>No matching headlines. Try another category or search term.</p>
+    <p class="explore-source-note">Troubleshooting: <a href="{{ url_for('feed_status') }}" target="_blank" rel="noopener">Check RSS feed status</a>. News comes from The Hacker News, SecurityWeek and BleepingComputer RSS feeds. Publication dates reflect the publishers’ feeds; original article images appear when supplied. Save articles to your personal reading list.</p>
+    </div>
+</section>
+{% endblock %}

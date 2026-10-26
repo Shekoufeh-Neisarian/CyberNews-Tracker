@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Sign In | CyberNews Tracker{% endblock %}
+{% block content %}
+<section class="auth-shell" aria-labelledby="login-heading">
+    <div class="auth-card">
+        <div class="login-logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div class="auth-eyebrow">CYBERNEWS / SECURE SIGN IN</div>
+        {% if registered %}
+        <h2 id="login-heading">Account created.</h2>
+        <p class="auth-intro">Your account is ready. Sign in to continue.</p>
+        {% else %}
+        <h2 id="login-heading">Sign in to CyberNews</h2>
+        <p class="auth-intro">Access your account, saved news and cybersecurity briefings.</p>
+        {% endif %}
+
+        {% if login_required %}
+            <p class="auth-notice" role="status">Please sign in to access that page.</p>
+        {% endif %}
+        {% if error %}
+            <p class="auth-error" role="alert">{{ error }}</p>
+        {% endif %}
+
+        <form action="{{ url_for('login') }}" method="POST" class="auth-form">
+            <div class="form-group">
+                <label for="username">USERNAME</label>
+                <input id="username" name="username" type="text" autocomplete="username" placeholder="Enter username" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password">PASSWORD</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" required>
+            </div>
+            <button class="primary-button auth-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
+        </form>
+
+        <div class="auth-demo" aria-label="Local demonstration login accounts">
+            <div class="auth-demo-heading"><span aria-hidden="true">◉</span> TEST THE WEBSITE <span class="auth-demo-tag">LOCAL DEMO</span></div>
+            <div class="auth-demo-row"><span>Reader account</span><code>user / user123</code></div>
+            <div class="auth-demo-row"><span>Administrator</span><code>admin / admin123</code></div>
+        </div>
+        <p class="auth-footnote"><a href="{{ url_for('register') }}">New here? Create an account →</a></p>
+        <p class="auth-footnote">Demo credentials are for local testing only. Change them before hosting publicly.</p>
+    </div>
+</section>
+{% endblock %}

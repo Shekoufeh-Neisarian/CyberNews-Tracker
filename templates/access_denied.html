@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}403 Access Denied | CyberNews Tracker{% endblock %}
+{% block content %}
+<section class="confirmation-section">
+    <div class="confirmation-card">
+        <h2>403 — Access Denied</h2>
+        <p><strong>{{ username }}</strong>, this page is available only to administrators.</p>
+        <p>Your role is checked on the server, even when you enter the URL directly.</p>
+        <a class="primary-button" href="{{ url_for('user_dashboard') }}">Back to User Dashboard</a>
+    </div>
+</section>
+{% endblock %}

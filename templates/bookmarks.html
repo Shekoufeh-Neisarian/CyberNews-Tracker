@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Saved Articles | CyberNews Tracker{% endblock %}
+{% block content %}
+<section class="explore-page bookmarks-page" aria-labelledby="bookmarks-title">
+    <div class="explore-head">
+        <div>
+            <span class="explore-kicker">YOUR LIBRARY / CYBERNEWS</span>
+            <h1 id="bookmarks-title">Your reading <em>list.</em></h1>
+            <p>Articles you saved while signed in as <strong>{{ username }}</strong>. Your list is stored in SQLite.</p>
+        </div>
+        <a class="explore-saved-link" href="{{ url_for('news') }}">← Back to news</a>
+    </div>
+    <div class="explore-tools bookmarks-tools">
+        <label class="explore-search-label" for="bookmarkSearchInput">
+            <span aria-hidden="true">⌕</span>
+            <input type="search" id="bookmarkSearchInput" placeholder="Search your saved articles…" autocomplete="off">
+        </label>
+        <span id="bookmarkCount" class="bookmark-count">Loading your library…</span>
+    </div>
+    <p id="bookmarkStatus" class="explore-status" role="status" aria-live="polite">Loading bookmarks…</p>
+    <div id="bookmarksContainer" class="explore-news-grid"></div>
+    <div id="bookmarksEmpty" class="bookmarks-empty" hidden>
+        <div class="bookmarks-empty-icon" aria-hidden="true">☆</div>
+        <h2>No saved articles here yet.</h2>
+        <p>Open the news feed and select <strong>Save</strong> on a story to keep it here.</p>
+        <a href="{{ url_for('news') }}" class="pulse-action-primary">Browse news ↗</a>
+    </div>
+</section>
+{% endblock %}

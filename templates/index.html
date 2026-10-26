@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}CyberNews | Cybersecurity Headlines{% endblock %}
+{% block content %}
+<div class="editorial-home">
+    <div class="editorial-heading">
+        <div><p class="editorial-eyebrow"><span class="pulse-live-dot"></span> LIVE FROM PUBLISHER RSS FEEDS</p>
+            <h1>Cybersecurity, <em>in focus.</em></h1>
+            <p>New vulnerabilities, attacks, and security research — linked to the original reporting.</p></div>
+        <a class="editorial-link" href="{{ url_for('news') }}">Explore all news <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="editorial-top-grid">
+        <section class="editorial-lead" id="featuredStory" aria-label="Featured publisher headline">
+            <div class="editorial-loading">Loading the latest publisher story…</div>
+        </section>
+        <aside class="editorial-wire" aria-labelledby="wire-heading">
+            <div class="editorial-wire-heading"><h2 id="wire-heading"><span aria-hidden="true">⌁</span> The news wire</h2><span class="wire-live">● RSS</span></div>
+            <div class="editorial-wire-list" id="homeWireFeed"><p class="editorial-loading">Checking sources…</p></div>
+            <div class="editorial-wire-footer"><a href="{{ url_for('news') }}">All headlines ↗</a></div>
+        </aside>
+    </div>
+    <section class="editorial-latest" aria-labelledby="home-latest-heading">
+        <div class="editorial-section-heading"><div><p class="editorial-eyebrow">LATEST REPORTING</p><h2 id="home-latest-heading">Fresh from the feed</h2></div>
+            <button id="refreshButton" class="briefing-shuffle" type="button">↻ Refresh RSS</button></div>
+        <div class="editorial-card-grid" id="homeStoryGrid"></div>
+        <div class="briefing-bottom"><span id="homeNewsStatus" role="status" aria-live="polite">Connecting to publisher feeds…</span>
+            <a href="{{ url_for('news') }}#news-search">Search &amp; filter stories ↗</a></div>
+    </section>
+</div>
+{% endblock %}

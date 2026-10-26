@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Session Security | CyberNews Tracker{% endblock %}
+
+{% block content %}
+<section class="security-shell" aria-labelledby="session-heading">
+    <div class="security-eyebrow">CYBERNEWS / ACCOUNT SECURITY</div>
+    <h2 id="session-heading">Session Security</h2>
+    <p class="security-lead">You're signed in as <strong>{{ username }}</strong>.
+       Your session identifier is stored in an HttpOnly cookie.</p>
+
+    <div class="security-status" role="status"><span class="status-dot"></span> SESSION ACTIVE</div>
+
+    <div class="security-grid">
+        <div class="security-card">
+            <h3>Protected cookies</h3>
+            <p><code>session_token</code> and <code>http_only_demo</code></p>
+            <p>HttpOnly is enabled. JavaScript cannot read these values.</p>
+        </div>
+        <div class="security-card">
+            <h3>JavaScript-readable cookie</h3>
+            <p><code>js_demo</code></p>
+            <p>HttpOnly is disabled for this demonstration.</p>
+        </div>
+    </div>
+
+    <div class="security-card security-inspector">
+        <h3>Browser cookie check</h3>
+        <p>Open <strong>F12 → Console</strong> and run <code>document.cookie</code>.
+           Compare with <strong>Application → Cookies</strong>, where the HttpOnly column is visible.</p>
+        <p class="security-console-label">JavaScript-visible cookies:</p>
+        <pre id="cookieOutput" class="security-console" aria-live="polite">Checking cookies…</pre>
+    </div>
+
+    <form method="POST" action="{{ url_for('logout') }}" class="security-logout">
+        <button class="primary-button" type="submit">Log Out</button>
+    </form>
+</section>
+{% endblock %}

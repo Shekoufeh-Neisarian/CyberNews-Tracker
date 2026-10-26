@@ -1,0 +1,44 @@
+# Python and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Sensitive and generated SQLite databases
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+
+# Allow the CyberNews demonstration database
+!cybernews_bookmarks.db
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*credentials*.json
+*secret*.json
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# Editor and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local build / distribution products
+dist/
+build/
+
+# Initial Screenshots
+screenshots/development-admin-overview.png
+screenshots/development-latest-news-light.png

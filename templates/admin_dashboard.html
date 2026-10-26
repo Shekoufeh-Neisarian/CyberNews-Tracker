@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Admin Command Center | CyberNews Tracker{% endblock %}
+{% block content %}
+<section class="account-space admin-space" aria-labelledby="admin-heading">
+  <div class="account-eyebrow"><span class="account-signal"></span> CYBERNEWS / ADMIN OPERATIONS</div>
+  <div class="account-hero admin-hero">
+    <div><p class="account-small-label">ACCOUNT CONTROL CENTER</p><h1 id="admin-heading">People &amp; permissions.</h1><p class="account-hero-description">Welcome, {{ auth_user.display_name }}. Review registrations, successful logins, and assign appropriate access and professional titles.</p></div>
+    <div class="account-hero-stamp"><span>AC</span><small>ACCESS<br>CONTROL</small></div>
+  </div>
+
+  <div class="account-metrics">
+    <div class="account-metric"><span>REGISTERED USERS</span><strong>{{ account_count }}</strong><small>All local accounts</small></div>
+    <div class="account-metric"><span>ADMINISTRATORS</span><strong>{{ admin_count }}</strong><small>Can manage accounts</small></div>
+    <div class="account-metric"><span>SUCCESSFUL SIGN-INS</span><strong>{{ login_count }}</strong><small>Recorded since tracking began</small></div>
+    <div class="account-metric"><span>NEW (24H)</span><strong>{{ new_count }}</strong><small>In the last 24 hours</small></div>
+  </div>
+
+  {% if updated %}
+  <div class="account-success" role="status">✓ Account settings saved for {{ updated }}. Permission changes take effect immediately.</div>
+  {% endif %}
+
+  <div class="account-panel admin-directory">
+    <div class="account-panel-heading admin-directory-heading"><div><span class="account-small-label">01 / ACCOUNT DIRECTORY</span><h2>Registered people</h2><p>Change professional titles independently of website permissions. Only the <strong>Admin</strong> access level grants admin privileges.</p></div><span class="account-count">{{ account_count }} MEMBERS</span></div>
+    <div class="account-table-scroll">
+      <table class="account-table">
+        <thead><tr><th>Member</th><th>Account settings</th><th>Registered</th><th>Last login</th><th>Sign-ins</th></tr></thead>
+        <tbody>
+          {% for member in accounts %}
+          <tr>
+            <td><div class="account-member"><span class="account-avatar">{{ member['display_name'][:1]|upper }}</span><div><strong>{{ member['display_name'] }}</strong><small>@{{ member['username'] }} {% if member['username'] == auth_user.username %}· you{% endif %}</small></div></div></td>
+            <td>
+              <form method="post" action="{{ url_for('update_user_profile', username=member['username']) }}" class="account-role-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <label><span>Access</span><select name="access_role" aria-label="Access role for {{ member['username'] }}">
+                  <option value="user" {% if member['access_role'] == 'user' %}selected{% endif %}>User</option>
+                  <option value="admin" {% if member['access_role'] == 'admin' %}selected{% endif %}>Administrator</option>
+                </select></label>
+                <label><span>Title</span><select name="profile_title" aria-label="Professional title for {{ member['username'] }}">
+                  {% for title in titles %}<option value="{{ title }}" {% if member['profile_title'] == title %}selected{% endif %}>{{ title }}</option>{% endfor %}
+                </select></label>
+                <button type="submit" class="account-save-button">Save</button>
+              </form>
+            </td>
+            <td class="account-table-date"><time class="berlin-datetime" data-utc="{{ member['registered_at'] }}">{{ member['registered_at'][:16] }}</time><small>Berlin time</small></td>
+            <td class="account-table-date">{% if member['last_login_at'] %}<time class="berlin-datetime" data-utc="{{ member['last_login_at'] }}">{{ member['last_login_at'][:16] }}</time><small>Berlin time</small>{% else %}Never{% endif %}</td>
+            <td><span class="account-signins">{{ member['login_count'] }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="admin-guidance"><strong>Security rule:</strong> Teacher/Professor/Researcher titles describe the member; they do not grant administrative access. You cannot demote yourself while signed in.</p>
+  </div>
+
+  <section class="account-panel admin-messages" id="contact-messages" aria-labelledby="admin-messages-heading">
+    <div class="account-panel-heading admin-directory-heading">
+      <div>
+        <span class="account-small-label">02 / CONTACT INBOX</span>
+        <h2 id="admin-messages-heading">Contact messages</h2>
+        <p>Form submissions are stored in the local SQLite database. Only administrators can view them.</p>
+      </div>
+      <div class="admin-inbox-stats">
+        <span class="account-count">{{ message_count }} TOTAL</span>
+        <span class="account-count admin-unread-badge">{{ unread_count }} UNREAD</span>
+      </div>
+    </div>
+    {% if message_action in ['read', 'unread', 'delete'] %}
+      <div class="account-success" role="status">Message updated successfully.</div>
+    {% endif %}
+    {% if messages %}
+      <div class="admin-message-list">
+      {% for entry in messages %}
+        <article class="admin-message-card {% if entry['status'] == 'unread' %}is-unread{% endif %}" aria-label="Message number {{ entry['id'] }}">
+          <div class="admin-message-top">
+            <div class="admin-message-from">
+              <span class="account-avatar" aria-hidden="true">{{ entry['name'][:1]|upper }}</span>
+              <div>
+                <strong class="contact-personal">{{ entry['name'] }}</strong>
+                <small class="contact-personal">{{ entry['email'] }}</small>
+              </div>
+            </div>
+            <div class="admin-message-meta">
+              <span class="admin-message-status {% if entry['status'] == 'unread' %}is-unread{% endif %}">{{ entry['status']|upper }}</span>
+              <time class="berlin-datetime" data-utc="{{ entry['submitted_at'] }}">{{ entry['submitted_at'] }}</time>
+            </div>
+          </div>
+          <p class="admin-message-body contact-personal">{{ entry['message'] }}</p>
+          <div class="admin-message-actions">
+            {% if entry['status'] == 'unread' %}
+              <form method="post" action="{{ url_for('admin_contact_message', message_id=entry['id'], action='read') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="account-save-button">✓ Mark read</button>
+              </form>
+            {% else %}
+              <form method="post" action="{{ url_for('admin_contact_message', message_id=entry['id'], action='unread') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="account-save-button admin-outline-button">Mark unread</button>
+              </form>
+            {% endif %}
+            <form method="post" action="{{ url_for('admin_contact_message', message_id=entry['id'], action='delete') }}"
+                  onsubmit="return confirm('Permanently delete this contact message?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button type="submit" class="account-save-button admin-delete-button">Delete</button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+      </div>
+      {% if message_count > 100 %}<p class="admin-guidance">Showing the 100 newest messages ({{ message_count }} stored).</p>{% endif %}
+    {% else %}
+      <p class="account-empty">No contact messages yet. New submissions will appear here.</p>
+    {% endif %}
+  </section>
+
+  <div class="account-two-column admin-bottom-panels">
+    <div class="account-panel"><div class="account-panel-heading"><span class="account-small-label">03 / AUDIT TRAIL</span><h2>Recent logins</h2><p>Only successful sign-ins are listed. Entries persist across restarts.</p></div>
+      <div class="account-activity">
+        {% for event in events %}
+          <div class="account-activity-row"><span class="account-activity-dot"></span><div><strong>{{ event['username'] }} signed in</strong><small><time class="berlin-datetime" data-utc="{{ event['logged_in_at'] }}">{{ event['logged_in_at'] }}</time></small></div></div>
+        {% else %}<p class="account-empty">No activity has been recorded.</p>{% endfor %}
+      </div>
+    </div>
+    <div class="account-panel account-guide"><div class="account-panel-heading"><span class="account-small-label">04 / ADMIN QUICK GUIDE</span><h2>How permissions work</h2></div>
+      <div class="account-guide-row"><span>01</span><div><strong>User</strong><p>Browse news, save articles, and use the personal dashboard.</p></div></div>
+      <div class="account-guide-row"><span>02</span><div><strong>Administrator</strong><p>All member features, plus account directory and role management.</p></div></div>
+      <div class="account-guide-row"><span>03</span><div><strong>Professional title</strong><p>Student, TA, Professor, Researcher, or Security Analyst. Display only, not a permission.</p></div></div>
+      <a class="account-guide-resource" href="https://thehackernews.com/p/upcoming-hacker-news-webinars.html" target="_blank" rel="noopener noreferrer">Cybersecurity webinars for your team ↗</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

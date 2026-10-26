@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CyberNews Tracker: cybersecurity headlines and security research from established publishers.">
+    <title>{% block title %}CyberNews Tracker{% endblock %}</title>
+
+    <!-- Theme preference: apply before styles load, avoiding a flash or reset. -->
+    <script>
+    (() => {
+        "use strict";
+        // A consented cookie remembers the theme across browser sessions.
+        // With Essential only, keep the user's explicit choice in this tab only.
+        const TAB_KEY = "cybernews-theme-tab";
+        function cookieValue(name) {
+            const part = document.cookie.split(";").map(p => p.trim())
+                .find(p => p.startsWith(name + "="));
+            return part ? part.slice(name.length + 1) : "";
+        }
+        function savedTheme() {
+            if (cookieValue("cybernews_consent") === "preferences") {
+                const theme = cookieValue("cybernews_theme");
+                if (theme === "light" || theme === "dark") return theme;
+            }
+            try {
+                const theme = sessionStorage.getItem(TAB_KEY);
+                if (theme === "light" || theme === "dark") return theme;
+            } catch (_) { /* storage unavailable; default to light */ }
+            return "light";
+        }
+        function applySavedTheme() {
+            const theme = savedTheme();
+            document.documentElement.classList.toggle("dark-theme", theme === "dark");
+            document.documentElement.style.colorScheme = theme;
+        }
+        // This script runs in <head>, before CSS and page content are rendered.
+        applySavedTheme();
+
+        // script.js already handles the theme button and opt-in cookie. We only
+        // remember its resulting state AFTER its click handler has run.
+        document.addEventListener("click", event => {
+            const target = event.target;
+            if (!target || !target.closest || !target.closest(
+                "#theme-toggle, #essentialCookiesButton, #saveCookieChoiceButton"
+            )) return;
+            const theme = document.documentElement.classList.contains("dark-theme") ? "dark" : "light";
+            try { sessionStorage.setItem(TAB_KEY, theme); } catch (_) { /* optional */ }
+            document.documentElement.style.colorScheme = theme;
+        });
+
+        // Also synchronize when navigating Back/Forward to a cached page.
+        window.addEventListener("pageshow", applySavedTheme);
+    })();
+    </script>
+    <link rel="alternate" type="application/rss+xml" title="CyberNews RSS Feed" href="{{ url_for('public_rss') }}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20261025-hero-inbox1') }}">
+    <script defer src="{{ url_for('static', filename='script.js', v='20261025-repair1') }}"></script>
+
+
+    <!-- EN/DE UI bundled here: no separate language.css required. -->
+    <style>
+/* Account identification, RSS subscription, and language toggle.
+   Loaded after style.css; does not change existing PR exercises. */
+.header-actions { gap: 8px; }
+.header-rss-link {
+    display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+    min-height: 34px; padding: 6px 10px; color: #076b85;
+    border: 1px solid #a9d6e5; background: #eaf8fc;
+    border-radius: 7px; text-decoration: none; font: 750 11px/1.2 Consolas, monospace;
+    letter-spacing: .5px; white-space: nowrap;
+}
+.header-rss-link:hover { background: #d5f4fa; border-color: #54bdcf; color: #054d63; }
+.language-switch {
+    display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;
+    border: 1px solid #b4d5e3; background: #f7fcff;
+    border-radius: 7px; padding: 3px 5px; color: #6a8393;
+    font: 700 10px/1.2 Consolas, monospace;
+}
+.language-choice { border: 0; border-radius: 4px; background: transparent; color: #688198;
+    padding: 5px 4px; font: inherit; cursor: pointer; }
+.language-choice.is-current { color: #006e8d; background: #d9f4fa; }
+.language-choice:hover { color: #006e8d; }
+.header-account-chip {
+    display: inline-flex; flex-direction: column; justify-content: center; gap: 3px;
+    min-width: 110px; max-width: 190px; min-height: 43px;
+    padding: 6px 10px 6px 14px; border-radius: 7px;
+    background: #0b121c; color: #f3f6f9; text-decoration: none;
+    border: 1px solid #283340;
+}
+.header-account-chip:hover { background: #17232f; color: #fff; }
+.header-account-name {
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #f5f8fb; font: 650 12px/1.1 'Consolas', 'Courier New', monospace;
+}
+.header-account-role {
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #a9bbcd; letter-spacing: 2px; font: 700 9px/1.1 'Consolas', monospace;
+}
+.site-header .nav-signout-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 38px; padding: 0; color: #526c7f;
+    background: transparent; border: 1px solid transparent; border-radius: 7px; cursor: pointer;
+}
+.site-header .nav-signout-icon:hover { color: #007f9d; border-color: #98ccdd; background: #ebf8fc; }
+.header-rss-link:focus-visible, .language-choice:focus-visible,
+.header-account-chip:focus-visible, .nav-signout-icon:focus-visible {
+    outline: 2px solid #00bccc; outline-offset: 3px;
+}
+html.dark-theme .header-rss-link { background: #173246; border-color: #315d70; color: #a5e6ef; }
+html.dark-theme .language-switch { background: #152a3c; border-color: #345467; color: #8fa4b7; }
+html.dark-theme .language-choice { color: #becdda; }
+html.dark-theme .language-choice.is-current { color: #c6fbff; background: #255068; }
+html.dark-theme .site-header .nav-signout-icon { color: #acc5d6; }
+html.dark-theme .site-header .nav-signout-icon:hover { background: #20374b; color: #fff; }
+@media (max-width: 1040px) {
+    .header-account-chip { max-width: 175px; }
+}
+@media (max-width: 680px) {
+    .header-inner { gap: 10px; }
+    .header-actions { gap: 5px; margin-left: auto; }
+    .header-account-chip { min-width: 0; max-width: 125px; padding: 5px 8px; }
+    .header-account-name { font-size: 10px; }
+    .header-account-role { font-size: 8px; letter-spacing: 1px; }
+    .header-rss-link { padding: 6px 7px; min-height: 31px; }
+    .language-switch { padding: 2px 3px; }
+    #theme-toggle { width: 30px; height: 31px; }
+    .site-header .nav-signout-icon { width: 27px; height: 31px; }
+}
+@media (max-width: 430px) {
+    .brand-wordmark { font-size: 15px; }
+    .brand-mark { width: 30px; height: 30px; }
+    .header-actions { flex-wrap: wrap; justify-content: flex-end; }
+    .header-account-chip { max-width: 105px; }
+}
+
+
+/* Optional translation status: only visible on errors; never overlaps layout. */
+.translation-status { display: none; color: #b65e38; font-size: 10px; max-width: 145px; }
+.translation-status.has-error { display: inline-block; }
+html.dark-theme .translation-status { color: #ffc2a4; }
+/* Final visual polish: reading progress + real RSS ticker + matched auth actions */
+.reading-progress {
+    position: fixed; top: 0; left: 0; z-index: 5000;
+    height: 3px; width: 0; pointer-events: none;
+    background: linear-gradient(90deg, #0ea5b7, #00c9bd);
+    box-shadow: 0 0 8px rgba(0,180,190,.22);
+    transition: width .07s linear;
+}
+html.dark-theme .reading-progress { background: linear-gradient(90deg,#26b7e8,#24e3c4); }
+.ticker-live-window { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; }
+.ticker-live-track { display: flex; align-items: center; width: max-content; min-height: 36px; }
+.ticker-live-track.is-scrolling { animation: cybernews-news-crawl 64s linear infinite; }
+.ticker-live-window:hover .ticker-live-track,
+.ticker-live-window:focus-within .ticker-live-track { animation-play-state: paused; }
+.ticker-story-group { flex: 0 0 auto; display: flex; align-items: center; }
+.ticker-story { display: inline-flex; align-items: center; gap: 8px; margin-right: 32px;
+    text-decoration: none; color: #385b71; font-size: 11px; font-weight: 500; }
+.ticker-story:hover { color: #087b99; text-decoration: underline; }
+.ticker-story-source { color: #087f98; font: 700 10px Consolas, monospace; letter-spacing: .3px; }
+.ticker-placeholder { color: #637f92; font-size: 11px; }
+@keyframes cybernews-news-crawl { to { transform: translateX(-50%); } }
+html.dark-theme .ticker-story {color:#d2e5f2;}
+html.dark-theme .ticker-story-source {color:#65d6e2;}
+html.dark-theme .ticker-placeholder {color:#a1c2d2;}
+@media(prefers-reduced-motion: reduce) {
+    .ticker-live-track.is-scrolling { animation: none; width: auto; }
+    .ticker-live-window { overflow-x: auto; }
+    .reading-progress { transition: none; }
+}
+/* Both account actions share shape, size and border system. */
+.site-header .header-actions .header-register,
+.site-header .header-actions .header-sign-in {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 35px; border-radius: 7px; padding: 8px 12px;
+    white-space: nowrap; font-size: 12px; font-weight: 750;
+    text-decoration: none; transition: background .16s, border-color .16s;
+}
+.site-header .header-actions .header-sign-in {
+    background: #f5fbfe; border: 1px solid #b8d5e2; color: #1d536d;
+}
+.site-header .header-actions .header-register {
+    color: #fff; border: 1px solid #087ea0; background: #078eaf;
+}
+.site-header .header-actions .header-register:hover,
+.site-header .header-actions .header-register.active {
+    background: #076f8e; border-color: #076f8e; color: #fff;
+}
+.site-header .header-actions .header-sign-in:hover,
+.site-header .header-actions .header-sign-in.active {
+    background: #e2f6fb; border-color: #56bcd0; color: #006c88;
+}
+html.dark-theme .site-header .header-actions .header-register {
+    background:#16a4bd; border-color:#16a4bd; color:#071b28;
+}
+html.dark-theme .site-header .header-actions .header-register:hover,
+html.dark-theme .site-header .header-actions .header-register.active {
+    background:#55d8e6; border-color:#55d8e6;
+}
+html.dark-theme .site-header .header-actions .header-sign-in {
+    background:#172d40; border-color:#436579; color:#e1f4fa;
+}
+html.dark-theme .site-header .header-actions .header-sign-in:hover,
+html.dark-theme .site-header .header-actions .header-sign-in.active {
+    background:#254b60; border-color:#58a4b4; color:#fff;
+}
+@media (max-width: 680px) {
+    .ticker-link { display:none; }
+    .ticker-live-track { min-height: 32px; }
+    .ticker-story { font-size: 10px; }
+    .site-header .header-actions .header-register,
+    .site-header .header-actions .header-sign-in {min-height:32px; padding: 6px 9px; font-size:11px;}
+}
+
+.password-guidance {display:block;margin-top:6px;color:#56768a;font-size:11px;line-height:1.55;}
+html.dark-theme .password-guidance {color:#50788b;}
+
+/* Fix visibility at all supported widths, even when the external stylesheet is stale. */
+.site-header .language-switch {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 7px;
+  background: #e7f7fa;
+  border: 1px solid #72bbc9;
+  border-radius: 8px;
+  color: #205168;
+  box-shadow: 0 0 0 1px rgba(19,155,174,.04);
+}
+.site-header .language-choice {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 29px;
+  min-height: 27px;
+  font: 800 12px/1.1 Consolas, monospace;
+  color: #28627a;
+}
+.site-header .language-choice.is-current { background: #00a6c5; color: #fff; }
+.site-header .language-choice:hover { color: #006b80; }
+.site-header .language-choice.is-current:hover { color: #fff; }
+html.dark-theme .site-header .language-switch { background: #193346; border-color: #466e80; color: #d1e8f1; }
+html.dark-theme .site-header .language-choice { color: #d1e8f1; }
+html.dark-theme .site-header .language-choice.is-current { background: #22c5d3; color: #05283c; }
+@media (max-width: 1040px) {
+  .site-header .header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; }
+}
+@media (max-width: 680px) {
+  .site-header .language-switch { margin-inline: 0; }
+  .site-header .language-choice { min-width: 27px; min-height: 27px; }
+}
+
+
+/* Colorful reading line: fills as the visitor scrolls. */
+.reading-progress,
+html.dark-theme .reading-progress {
+    height: 4px;
+    background: linear-gradient(90deg,
+        #ff5b9f 0%, #ad70f7 24%, #49b6ff 51%,
+        #33d6ca 77%, #56e4a0 100%);
+    box-shadow: 0 0 9px rgba(93, 159, 239, .38);
+}
+    </style>
+</head>
+<body>
+    <div id="readingProgress" class="reading-progress" aria-hidden="true"></div>
+    <!-- Compact news strip, inspired by the Base44 prototype. -->
+    <div class="news-ticker" aria-label="CyberNews updates">
+        <div class="header-container news-ticker-inner">
+            <span class="ticker-label"><span class="ticker-dot" aria-hidden="true"></span> LATEST HEADLINES</span>
+            <div class="ticker-live-window" aria-label="Recent news from trusted publishers">
+                <div class="ticker-live-track" id="liveHeadlineTicker" aria-live="off">
+                    <span class="ticker-placeholder">Connecting to publisher feeds…</span>
+                </div>
+            </div>
+            <a class="ticker-link" href="{{ url_for('news') }}">All news <span aria-hidden="true">↗</span></a>
+        </div>
+    </div>
+
+    <!-- One compact navigation row instead of the old tall header. -->
+    <header class="site-header">
+        <div class="header-container header-inner">
+            <a href="{{ url_for('home') }}" class="brand" aria-label="CyberNews home">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4.2 8-10.2V5.5L12 2 4 5.5v6.3C4 17.8 12 22 12 22Z"/>
+                        <path d="M9.2 12.1l1.7 1.8 3.9-4.2"/>
+                    </svg>
+                </span>
+                <span class="brand-wordmark">Cyber<span>News</span></span>
+                <span class="brand-version">TRACKER</span>
+            </a>
+
+            <nav class="site-navigation" aria-label="Main navigation">
+                <a href="{{ url_for('home') }}" class="{% if request.endpoint == 'home' %}active{% endif %}">Home</a>
+                <a href="{{ url_for('news') }}" class="{% if request.endpoint == 'news' %}active{% endif %}">Latest News</a>
+                <a href="{{ url_for('news') }}#news-search">Search</a>
+                {% if auth_user %}
+                    <a href="{{ url_for('bookmarks_page') }}" class="{% if request.endpoint == 'bookmarks_page' %}active{% endif %}">Bookmarks</a>
+                    <a href="{{ url_for('user_dashboard') }}" class="{% if request.endpoint == 'user_dashboard' %}active{% endif %}">My Account</a>
+                    
+                    {% if auth_user.role == 'admin' %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">Admin Console</a>
+                    {% endif %}
+                {% endif %}
+                <a href="{{ url_for('contact') }}" class="{% if request.endpoint == 'contact' %}active{% endif %}">Contact</a>
+            </nav>
+
+            <div class="header-actions">
+                <div class="language-switch" role="group" aria-label="Website language">
+                    <button type="button" class="language-choice is-current" data-lang-choice="en" aria-pressed="true" lang="en">EN</button>
+                    <span aria-hidden="true">/</span>
+                    <button type="button" class="language-choice" data-lang-choice="de" aria-pressed="false" lang="de">DE</button>
+                    <span id="translationStatus" class="translation-status" aria-live="polite" title="Google Cloud translation status"></span>
+                </div>
+                <button id="theme-toggle" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">☾</button>
+                {% if auth_user %}
+                    <a href="{{ url_for('user_dashboard') }}" class="header-account-chip" title="View your account" aria-label="Account: {{ auth_user.display_name }}, {{ auth_user.profile_title }}, {{ auth_user.role }}">
+                        <span class="header-account-name">{{ auth_user.display_name or auth_user.username }}</span>
+                        <span class="header-account-role">
+                            {% if auth_user.role == 'admin' %}ADMINISTRATOR{% elif auth_user.profile_title and auth_user.profile_title != 'Reader' %}{{ auth_user.profile_title|upper }} · MEMBER{% else %}MEMBER{% endif %}
+                        </span>
+                    </a>
+                    <form method="post" action="{{ url_for('logout') }}" class="nav-logout-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="nav-signout-icon" title="Sign out" aria-label="Sign out">
+                            <svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="header-register {% if request.endpoint == 'register' %}active{% endif %}">Join</a>
+                    <a href="{{ url_for('login') }}" class="header-sign-in {% if request.endpoint in ['login', 'register'] %}active{% endif %}">Sign in</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="site-main {% if request.endpoint in ['login', 'register'] %}login-main{% endif %}" id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="header-container">
+            <div class="footer-columns">
+                <div class="footer-about">
+                    <a href="{{ url_for('home') }}" class="footer-brand">
+                        <span class="footer-brand-icon" aria-hidden="true">◆</span> CyberNews Tracker
+                    </a>
+                    <p>Explore cybersecurity reporting from trusted publications, with saved articles and secure member accounts.</p>
+                </div>
+                <div class="footer-links">
+                    <h2>EXPLORE</h2>
+                    <a href="{{ url_for('home') }}">News Home</a>
+                    <a href="{{ url_for('news') }}">Latest News Feed</a>
+                    <a href="{{ url_for('contact') }}">Contact</a>
+                </div>
+                <div class="footer-links">
+                    <h2>YOUR ACCOUNT</h2>
+                    {% if auth_user %}
+                        <a href="{{ url_for('user_dashboard') }}">My Account</a>
+                        <a href="{{ url_for('bookmarks_page') }}">Saved Bookmarks</a>
+                        
+                    {% else %}
+                        <a href="{{ url_for('login') }}">Sign in</a>
+                        <a href="{{ url_for('news') }}">Explore News</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 CyberNews Tracker · Developed by Shekoufeh Neisarian</span>
+                <button type="button" class="footer-cookie-link" id="cookieSettingsButton">Cookie settings</button>
+                <span class="footer-tech">FLASK <span aria-hidden="true">·</span> JAVASCRIPT <span aria-hidden="true">·</span> WEB SECURITY</span>
+            </div>
+        </div>
+    </footer>
+    <!-- Cookie consent: essential session cookie works independently of optional preferences. -->
+    <section id="cookieConsent" class="cookie-consent" aria-label="Cookie choices" hidden>
+        <div class="cookie-consent-copy">
+            <span class="cookie-consent-eyebrow">YOUR PRIVACY / CYBERNEWS</span>
+            <h2>Choose your cookies</h2>
+            <p>Essential cookies support sign-in and store your cookie decision. You may also allow a theme-preference cookie to remember light or dark mode. We do not use advertising or analytics cookies.</p>
+        </div>
+        <div class="cookie-consent-actions">
+            <label class="cookie-choice"><input id="themeCookieOptIn" type="checkbox"> <span>Remember my theme (optional)</span></label>
+            <div class="cookie-buttons">
+                <button id="essentialCookiesButton" type="button" class="cookie-secondary">Essential only</button>
+                <button id="saveCookieChoiceButton" type="button" class="cookie-primary">Save my choice</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- EN/DE behavior bundled here: no separate language.js required. -->
+    <script>
+/* CyberNews English / Deutsch switch.
+   Language is stored temporarily in sessionStorage (not in a cookie).
+   Public RSS story titles and summaries can also be translated via Google Cloud.
+   Existing Flask routes, security/session cookies and RSS APIs are unchanged. */
+(() => {
+    "use strict";
+    const KEY = "cybernews-language";
+    const german = {
+        // Header, navigation, footer
+        "RSS NEWSWIRE": "RSS-NACHRICHTEN",
+        "LATEST HEADLINES": "NEUESTE SCHLAGZEILEN",
+        "All news": "Alle Meldungen",
+        "Connecting to publisher feeds…": "Verbindung zu den Nachrichtenquellen …",
+        "Publisher headlines temporarily unavailable": "Schlagzeilen momentan nicht verfügbar",
+        "Browse latest news": "Neueste Meldungen",
+        "TRACKER": "TRACKER",
+        "Home": "Startseite", "Latest News": "Aktuelles", "Search": "Suche",
+        "Bookmarks": "Lesezeichen", "My Account": "Mein Konto",
+        "Admin Console": "Verwaltung", "Contact": "Kontakt",
+        "Join": "Registrieren", "Sign in": "Anmelden", "Sign out": "Abmelden",
+        "Log out": "Abmelden", "Member": "Mitglied", "MEMBER": "MITGLIED",
+        "Administrator": "Administrator", "ADMINISTRATOR": "ADMINISTRATOR",
+        "Teaching Assistant": "Tutor/in", "Student": "Student/in",
+        "Researcher": "Forscher/in", "Reader": "Leser/in",
+        "Security Analyst": "Sicherheitsanalyst/in", "Guest": "Gast",
+        "Developed by Shekoufeh Neisarian": "Entwickelt von Shekoufeh Neisarian",
+        "EXPLORE": "ENTDECKEN", "YOUR ACCOUNT": "DEIN KONTO",
+        "News Home": "News-Startseite", "Latest News Feed": "Neueste Nachrichten",
+        "Saved Bookmarks": "Gespeicherte Artikel", "Explore News": "Nachrichten entdecken",
+        "Cookie settings": "Cookie-Einstellungen", "RSS feed": "RSS-Feed",
+        "Explore cybersecurity reporting from trusted publications, with saved articles and secure member accounts.":
+            "Entdecke Cybersicherheitsberichte vertrauenswürdiger Medien, speichere Artikel und verwalte dein Konto sicher.",
+        // Cookie consent
+        "YOUR PRIVACY / CYBERNEWS": "DEINE PRIVATSPHÄRE / CYBERNEWS",
+        "Choose your cookies": "Cookie-Einstellungen auswählen",
+        "Essential cookies support sign-in and store your cookie decision. You may also allow a theme-preference cookie to remember light or dark mode. We do not use advertising or analytics cookies.":
+            "Notwendige Cookies ermöglichen die Anmeldung und speichern deine Cookie-Auswahl. Optional kannst du das helle oder dunkle Design als Einstellung speichern. Wir verwenden keine Werbe- oder Analyse-Cookies.",
+        "Remember my theme (optional)": "Design merken (optional)",
+        "Essential only": "Nur notwendige", "Save my choice": "Auswahl speichern",
+        // Homepage editorial news
+        "LIVE FROM PUBLISHER RSS FEEDS": "LIVE AUS DEN RSS-FEEDS DER MEDIEN",
+        "Cybersecurity,": "Cybersicherheit,", "in focus.": "im Fokus.",
+        "New vulnerabilities, attacks, and security research — linked to the original reporting.":
+            "Neue Sicherheitslücken, Angriffe und Forschung – mit Links zu den Originalberichten.",
+        "Explore all news": "Alle Meldungen entdecken",
+        "The news wire": "Nachrichten-Ticker", "All headlines": "Alle Schlagzeilen",
+        "All headlines ↗": "Alle Schlagzeilen ↗",
+        "↻ Refresh RSS": "↻ RSS aktualisieren",
+        "☆ Saved articles": "☆ Gespeicherte Artikel",
+        "← Back to news": "← Zurück zu den Nachrichten",
+        "Search & filter stories ↗": "Meldungen suchen und filtern ↗",
+        "Explore all news ↗": "Alle Meldungen entdecken ↗",
+        "PROFESSOR · MEMBER": "PROFESSOR/IN · MITGLIED",
+        "TEACHING ASSISTANT · MEMBER": "TUTOR/IN · MITGLIED",
+        "RESEARCHER · MEMBER": "FORSCHER/IN · MITGLIED",
+        "SECURITY ANALYST · MEMBER": "SICHERHEITSANALYST/IN · MITGLIED",
+        "LATEST REPORTING": "NEUESTE BERICHTE", "Fresh from the feed": "Frisch aus dem Feed",
+        "Refresh RSS": "RSS aktualisieren", "Search & filter stories": "Meldungen suchen und filtern",
+        "Loading the latest publisher story…": "Neueste Meldung wird geladen …",
+        "Checking sources…": "Quellen werden überprüft …",
+        "Connecting to publisher feeds…": "Verbindung zu den RSS-Feeds …",
+        "PUBLISHER IMAGE NOT PROVIDED": "KEIN ARTIKELBILD VERFÜGBAR",
+        "Publisher article": "Originalartikel", "FEATURED": "IM FOKUS",
+        "Publication date unavailable": "Veröffentlichungsdatum unbekannt",
+        "Checking publisher RSS feeds…": "RSS-Feeds werden abgerufen …",
+        "Publisher feeds are temporarily unavailable. No sample incidents have been substituted.":
+            "Die RSS-Feeds sind vorübergehend nicht erreichbar. Es werden keine erfundenen Vorfälle angezeigt.",
+        "Try refreshing later or browse the original publishers.":
+            "Bitte später erneut versuchen oder direkt die Originalquellen besuchen.",
+        // Explore news and bookmarks
+        "CYBERNEWS / EXPLORE": "CYBERNEWS / ENTDECKEN",
+        "Stay ahead of the": "Bleib informiert über die", "story.": "Nachrichten.",
+        "Browse cybersecurity coverage, filter what matters, and save useful reading for later.":
+            "Entdecke Cybersicherheitsberichte, filtere nach Themen und speichere interessante Artikel.",
+        "Saved articles": "Gespeicherte Artikel", "All": "Alle",
+        "Vulnerabilities": "Sicherheitslücken", "Ransomware": "Ransomware",
+        "Malware": "Schadsoftware", "Data Breaches": "Datenlecks",
+        "AI Security": "KI-Sicherheit", "THE NEWS WIRE": "NACHRICHTEN-TICKER",
+        "Discover what's happening": "Aktuelle Entwicklungen entdecken",
+        "Loading publisher RSS articles…": "RSS-Artikel werden geladen …",
+        "No matching headlines. Try another category or search term.":
+            "Keine passenden Meldungen. Versuche eine andere Kategorie oder Suche.",
+        "News comes from The Hacker News, SecurityWeek and BleepingComputer RSS feeds. Publication dates reflect the publishers’ feeds; original article images appear when supplied. Save articles to your personal reading list.":
+            "Die Nachrichten stammen aus den RSS-Feeds von The Hacker News, SecurityWeek und BleepingComputer. Datum und Bilder werden aus den Quellen übernommen. Interessante Artikel kannst du speichern.",
+        "YOUR LIBRARY / CYBERNEWS": "DEINE BIBLIOTHEK / CYBERNEWS",
+        "Your reading": "Deine Lese", "list.": "liste.",
+        "Back to news": "Zurück zu den Nachrichten",
+        "Loading your library…": "Deine Bibliothek wird geladen …",
+        "Loading bookmarks…": "Lesezeichen werden geladen …",
+        "No saved articles here yet.": "Noch keine gespeicherten Artikel.",
+        "Nothing matches your search.": "Keine Treffer für deine Suche.",
+        "Open the news feed and select": "Öffne die Nachrichten und wähle",
+        "on a story to keep it here.": "bei einem Artikel, um ihn zu speichern.",
+        "Save": "Speichern", "Saved": "Gespeichert", "Remove": "Entfernen",
+        "Read original story": "Originalartikel lesen",
+        // Login, registration
+        "CYBERNEWS / SECURE SIGN IN": "CYBERNEWS / SICHERE ANMELDUNG",
+        "Sign in to CyberNews": "Bei CyberNews anmelden",
+        "Access your account, saved news and cybersecurity briefings.":
+            "Greife auf dein Konto, gespeicherte Nachrichten und Cybersecurity-Berichte zu.",
+        "Enter username": "Benutzernamen eingeben", "Enter password": "Passwort eingeben",
+        "Demo credentials are for local testing only. Change them before hosting publicly.":
+            "Die Test-Zugangsdaten sind nur für lokale Tests gedacht. Ändere sie vor einer öffentlichen Bereitstellung.",
+        "Create a reader account. An administrator can update your professional title later.":
+            "Erstelle ein Leserkonto. Eine Administratorin oder ein Administrator kann deine Berufsbezeichnung später ändern.",
+        "Create account": "Konto erstellen", "Already registered?": "Schon registriert?",
+        "Passwords are stored as hashes. New registrations receive standard User access.":
+            "Passwörter werden gehasht gespeichert. Neue Konten erhalten standardmäßig den Zugriff als Benutzer/in.",
+        "Welcome back.": "Willkommen zurück.",
+        "Your next cybersecurity briefing starts here.": "Dein nächstes Cybersecurity-Briefing beginnt hier.",
+        "Please sign in to access that page.": "Bitte melde dich an, um diese Seite zu öffnen.",
+        "Account created! You can sign in now.": "Konto erstellt! Du kannst dich jetzt anmelden.",
+        "USERNAME": "BENUTZERNAME", "PASSWORD": "PASSWORT",
+        "DISPLAY NAME": "ANZEIGENAME", "CONFIRM PASSWORD": "PASSWORT BESTÄTIGEN",
+        "TEST THE WEBSITE": "WEBSEITE TESTEN", "LOCAL DEMO": "LOKALER TEST",
+        "Reader account": "Leserkonto", "New here? Create an account": "Neu hier? Konto erstellen",
+        "For this learning project only. Sessions are stored on the Flask server.":
+            "Nur für das Lernprojekt. Sitzungen werden auf dem Flask-Server gespeichert.",
+        "CYBERNEWS / NEW ACCOUNT": "CYBERNEWS / NEUES KONTO",
+        "Join the briefing.": "Jetzt anmelden.",
+        "Account created.": "Konto erstellt.",
+        "Your account is ready. Sign in to continue.": "Dein Konto ist bereit. Bitte melde dich an.",
+        "Use 8–128 characters. Never reuse an important password for this local demo.": "Verwende 8–128 Zeichen und kein wichtiges Passwort für diese lokale Demo.",
+        "Create a reader account. An administrator can update your professional title later.":
+            "Erstelle ein Leserkonto. Eine Administratorin oder ein Administrator kann später deine Berufsbezeichnung ändern.",
+        "Create account": "Konto erstellen", "Already registered?": "Schon registriert?",
+        "Passwords are stored as hashes. New registrations receive standard User access.":
+            "Passwörter werden gehasht gespeichert. Neue Konten erhalten standardmäßig Benutzerrechte.",
+        // Account dashboard
+        "YOUR CYBERNEWS DESK / ACCOUNT OVERVIEW": "DEIN CYBERNEWS-BEREICH / KONTOÜBERSICHT",
+        "PERSONAL BRIEFING": "PERSÖNLICHER ÜBERBLICK",
+        "Welcome back,": "Willkommen zurück,",
+        "Your cybersecurity reading space, saved stories, and account activity, all in one place.":
+            "Deine Nachrichten, Lesezeichen und Kontoaktivitäten an einem Ort.",
+        "MEMBER SINCE": "MITGLIED SEIT", "LATEST SIGN-IN": "LETZTE ANMELDUNG",
+        "SAVED ARTICLES": "GESPEICHERTE ARTIKEL", "SIGN-INS": "ANMELDUNGEN",
+        "Account registration": "Kontoregistrierung", "Berlin local time": "Berliner Ortszeit",
+        "Your personal collection": "Deine persönliche Sammlung",
+        "Recorded by this app": "Von dieser App erfasst",
+        "01 / YOUR WORKSPACE": "01 / DEIN ARBEITSBEREICH",
+        "Continue your research": "Recherche fortsetzen",
+        "A few useful places to start. No extra features to learn all at once.":
+            "Einige hilfreiche Startpunkte, ohne unnötige Zusatzfunktionen.",
+        "Explore latest news": "Neueste Nachrichten entdecken",
+        "Live cybersecurity articles and filters": "Aktuelle Cybersecurity-Artikel und Filter",
+        "Saved reading list": "Gespeicherte Leseliste",
+        "Find what you bookmarked earlier": "Deine früher gespeicherten Artikel finden",
+        "Account administration": "Kontoverwaltung",
+        "Review roles and sign-in activity": "Rollen und Anmeldeaktivität prüfen",
+        "Security webinars": "Security-Webinare",
+        "Explore learning opportunities from The Hacker News": "Weiterbildungsangebote von The Hacker News entdecken",
+        "02 / SECURITY ACTIVITY": "02 / SICHERHEITSAKTIVITÄT",
+        "Your sign-in history": "Deine Anmeldehistorie",
+        "Only your account activity is shown here.": "Hier wird nur deine eigene Kontoaktivität angezeigt.",
+        "Successful sign-in": "Erfolgreiche Anmeldung", "LATEST": "NEUESTE",
+        "No sign-ins recorded yet.": "Noch keine Anmeldungen erfasst.",
+        "Previous sign-in:": "Vorherige Anmeldung:",
+        "This is your first recorded sign-in": "Dies ist deine erste erfasste Anmeldung",
+        "LEARNING CORNER / EXTERNAL RESOURCE": "LERNBEREICH / EXTERNE RESSOURCE",
+        "Keep up with security research": "Bei Sicherheitsforschung auf dem Laufenden bleiben",
+        "Explore upcoming and recorded cybersecurity webinars from The Hacker News. This is an external resource, not a CyberNews booking feature.":
+            "Entdecke anstehende und aufgezeichnete Cybersecurity-Webinare von The Hacker News. Dies ist ein externer Link, keine CyberNews-Buchungsfunktion.",
+        "Explore webinars": "Webinare entdecken",
+        // Admin dashboard and role controls
+        "CYBERNEWS / ADMIN OPERATIONS": "CYBERNEWS / ADMINISTRATION",
+        "ACCOUNT CONTROL CENTER": "KONTOVERWALTUNG",
+        "People &": "Personen &", "permissions.": "Berechtigungen.",
+        "REGISTERED USERS": "REGISTRIERTE PERSONEN", "ADMINISTRATORS": "ADMINISTRATOREN",
+        "SUCCESSFUL SIGN-INS": "ERFOLGREICHE ANMELDUNGEN", "NEW (24H)": "NEU (24 STD.)",
+        "All local accounts": "Alle lokalen Konten", "Can manage accounts": "Dürfen Konten verwalten",
+        "Recorded since tracking began": "Seit Beginn der Erfassung",
+        "In the last 24 hours": "In den letzten 24 Stunden",
+        "01 / ACCOUNT DIRECTORY": "01 / KONTOVERZEICHNIS",
+        "Registered people": "Registrierte Personen",
+        "Access": "Zugriff", "Title": "Berufsbezeichnung", "Save": "Speichern",
+        "Member": "Mitglied", "Account settings": "Kontoeinstellungen",
+        "Registered": "Registriert", "Last login": "Letzte Anmeldung", "Sign-ins": "Anmeldungen",
+        "User": "Benutzer/in", "Never": "Noch nie", "Berlin time": "Berliner Zeit",
+        "MEMBERS": "MITGLIEDER", "you": "du",
+        "02 / AUDIT TRAIL": "02 / PROTOKOLL", "Recent logins": "Letzte Anmeldungen",
+        "Only successful sign-ins are listed. Entries persist across restarts.":
+            "Nur erfolgreiche Anmeldungen werden angezeigt. Einträge bleiben nach Neustarts erhalten.",
+        "No activity has been recorded.": "Noch keine Aktivität erfasst.",
+        "03 / ADMIN QUICK GUIDE": "03 / ADMIN-KURZANLEITUNG",
+        "How permissions work": "So funktionieren Berechtigungen",
+        "Professional title": "Berufsbezeichnung",
+        "Browse news, save articles, and use the personal dashboard.":
+            "Nachrichten lesen, Artikel speichern und das persönliche Dashboard nutzen.",
+        "All member features, plus account directory and role management.":
+            "Alle Mitgliederfunktionen sowie Kontoverzeichnis und Rollenverwaltung.",
+        "Student, TA, Professor, Researcher, or Security Analyst. Display only, not a permission.":
+            "Student/in, Tutor/in, Professor/in, Forscher/in oder Security Analyst. Nur Anzeige, keine Berechtigung.",
+        "Cybersecurity webinars for your team": "Cybersecurity-Webinare für dein Team",
+        "People & permissions.": "Personen und Berechtigungen.",
+        "View your account": "Mein Konto öffnen",
+        "Subscribe to the CyberNews RSS feed": "CyberNews-RSS-Feed abonnieren",
+        "Open RSS feed": "RSS-Feed öffnen",
+        "Switch to dark mode": "Dunkles Design aktivieren",
+        "Switch to light mode": "Helles Design aktivieren",
+        "Sign-in": "Anmeldung",
+        "ACCESS": "ZUGRIFF", "ADMIN QUICK GUIDE": "ADMIN-KURZANLEITUNG",
+        // Contact form and admin inbox; user-submitted personal text is excluded above.
+        "CYBERNEWS / CONTACT": "CYBERNEWS / KONTAKT",
+        "SEND A MESSAGE": "NACHRICHT SENDEN", "Get in touch.": "Kontakt aufnehmen.",
+        "Report a website issue, share feedback or suggest an improvement to CyberNews.":
+            "Melde ein Problem mit der Website, gib Feedback oder schlage eine Verbesserung für CyberNews vor.",
+        "Name": "Name", "Email": "E-Mail", "Message": "Nachricht",
+        "Enter your name": "Namen eingeben", "Enter your email address": "E-Mail-Adresse eingeben",
+        "Write your message here...": "Schreibe deine Nachricht hier ...",
+        "Your message is stored in this website's local database and is accessible only to CyberNews administrators. It is not emailed automatically. Please don't include passwords or confidential information.":
+            "Deine Nachricht wird in der lokalen Datenbank gespeichert und ist nur für CyberNews-Administratoren sichtbar. Es wird keine E-Mail automatisch versendet. Bitte keine Passwörter oder vertraulichen Informationen senden.",
+        "Send Message": "Nachricht senden", "Message saved": "Nachricht gespeichert",
+        "Your submission": "Deine Nachricht", "Back to Home": "Zur Startseite",
+        "02 / CONTACT INBOX": "02 / KONTAKT-POSTEINGANG",
+        "Contact messages": "Kontaktnachrichten",
+        "Form submissions are stored in the local SQLite database. Only administrators can view them.":
+            "Formulareinsendungen werden lokal in SQLite gespeichert. Nur Administratoren können sie einsehen.",
+        "TOTAL": "GESAMT", "UNREAD": "UNGELESEN", "READ": "GELESEN",
+        "Mark read": "Als gelesen markieren", "Mark unread": "Als ungelesen markieren",
+        "Delete": "Löschen", "Message updated successfully.": "Nachricht erfolgreich aktualisiert.",
+        "No contact messages yet. New submissions will appear here.":
+            "Noch keine Kontaktnachrichten. Neue Nachrichten werden hier angezeigt.",
+        "03 / AUDIT TRAIL": "03 / PROTOKOLL", "04 / ADMIN QUICK GUIDE": "04 / ADMIN-KURZANLEITUNG"
+    };
+    const translationsForAttributes = ["placeholder", "title", "aria-label"];
+    const originalNodes = new WeakMap();
+    const originalsForAttributes = new WeakMap();
+    let language = "en";
+
+    function translateValue(text) {
+        if (typeof text !== "string") return text;
+        const match = text.match(/^(\s*)([\s\S]*?)(\s*)$/);
+        if (!match) return text;
+        const [, start, content, end] = match;
+        if (!content) return text;
+        if (Object.prototype.hasOwnProperty.call(german, content)) {
+            return start + german[content] + end;
+        }
+        // Preserve article publication dates and counts while translating UI labels.
+        const patterns = [
+            [/^Published (.+)$/i, "Veröffentlicht $1"],
+            [/^(\d+) of (\d+) stories$/, "$1 von $2 Meldungen"],
+            [/^(\d+) of (\d+) saved$/, "$1 von $2 gespeichert"],
+            [/^(\d+) stories$/, "$1 Meldungen"],
+            [/^Showing (\d+) headlines from verified publisher RSS endpoints\. Dates are displayed in Berlin time\.$/, "$1 Schlagzeilen aus überprüften RSS-Quellen. Datumsangaben in Berliner Zeit."],
+            [/^(\d+) publisher headlines · Images shown when included by the source · Dates in Berlin time$/, "$1 Schlagzeilen · Bilder von den Originalquellen · Datumsangaben in Berliner Zeit"],
+            [/^Welcome, (.+)\. Review registrations, successful logins, and assign appropriate access and professional titles\.$/, "Willkommen, $1. Hier kannst du Registrierungen und Anmeldungen überprüfen sowie Rollen und Berufsbezeichnungen verwalten."],
+            [/^Account settings saved for (.+)\. Permission changes take effect immediately\.$/, "Kontoeinstellungen für $1 gespeichert. Änderungen der Berechtigungen gelten sofort."],
+            [/^Articles you saved while signed in as (.+)\. Your list is stored in SQLite\.$/, "Als $1 gespeicherte Artikel. Deine Liste wird in SQLite gespeichert."],
+            [/^(.+) access$/, "$1-Zugriff"],
+            [/^(.+) signed in$/, "$1 hat sich angemeldet"],
+            [/^Could not load bookmarks: (.+)$/, "Lesezeichen konnten nicht geladen werden: $1"],
+            [/^Could not update bookmark: (.+)$/, "Lesezeichen konnte nicht geändert werden: $1"],
+        ];
+        for (const [expression, replacement] of patterns) {
+            if (expression.test(content)) return start + content.replace(expression, replacement) + end;
+        }
+        return text;
+    }
+
+    function excluded(node) {
+        const owner = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+        return owner && owner.closest && owner.closest(
+            "script, style, code, pre, .contact-personal, .brand-wordmark, .header-account-chip, .footer-brand, .footer-tech, .ticker-story-source, time.berlin-datetime"
+        );
+    }
+    function translateNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            if (excluded(node)) return;
+            if (!originalNodes.has(node)) originalNodes.set(node, node.nodeValue);
+            const original = originalNodes.get(node);
+            const next = language === "de" ? translateValue(original) : original;
+            if (node.nodeValue !== next) node.nodeValue = next;
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+            if (excluded(node)) return;
+            if (!originalsForAttributes.has(node)) originalsForAttributes.set(node, {});
+            const saved = originalsForAttributes.get(node);
+            for (const attribute of translationsForAttributes) {
+                if (!node.hasAttribute(attribute)) continue;
+                if (!Object.prototype.hasOwnProperty.call(saved, attribute)) saved[attribute] = node.getAttribute(attribute);
+                const initial = saved[attribute];
+                const next = language === "de" ? translateValue(initial) : initial;
+                if (node.getAttribute(attribute) !== next) node.setAttribute(attribute, next);
+            }
+        }
+    }
+    function translateBranch(root) {
+        translateNode(root);
+        if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_NODE) return;
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+        while (walker.nextNode()) translateNode(walker.currentNode);
+    }
+    function formatLocalTimes() {
+        document.querySelectorAll("time.berlin-datetime[data-utc]").forEach(element => {
+            const raw = element.dataset.utc;
+            const iso = raw?.endsWith(" UTC") ? raw.slice(0, -4).replace(" ", "T") + "Z" : raw;
+            const date = new Date(iso || "");
+            if (Number.isNaN(date.getTime())) return;
+            element.textContent = new Intl.DateTimeFormat(language === "de" ? "de-DE" : "en-GB", {
+                timeZone: "Europe/Berlin", day: "2-digit", month: "short", year: "numeric",
+                hour: "2-digit", minute: "2-digit", timeZoneName: "short"
+            }).format(date);
+        });
+    }
+    // Google Translate translates PUBLIC news text not covered by the built-in
+    // dictionary. Private account/user information never goes to Google.
+    const cloudTranslations = new Map();
+    let cloudEpoch = 0;
+    let cloudTimer = null;
+    let cloudWorking = false;
+    let cloudRerun = false;
+    const publicNewsPage = ["/", "/news"].includes(location.pathname);
+
+    function cloudEligible(node) {
+        if (!node || node.nodeType !== Node.TEXT_NODE || !node.parentElement) return false;
+        const element = node.parentElement;
+        if (element.closest("script, style, pre, code, textarea, select, option, input, " +
+                            "[contenteditable], .header-account-chip, .brand, .footer-brand, " +
+                            ".footer-tech, .ticker-story-source, time, .language-switch, " +
+                            ".news-source, .story-source, .publisher-name")) return false;
+        const publicArea = element.closest("#main-content, .site-header, .site-footer, .news-ticker");
+        if (!publicArea) return false;
+        if (!publicNewsPage && element.closest("#main-content")) return false;
+        if (!originalNodes.has(node)) originalNodes.set(node, node.nodeValue);
+        const original = originalNodes.get(node).trim();
+        // Do not transmit emails, technical strings, secrets or empty fragments.
+        return original.length > 2 && original.length <= 500 &&
+            /[a-zA-Z]{3}/.test(original) && !/\S+@\S+/.test(original) &&
+            !/https?:\/\//i.test(original) && !/^CVE-\d{4}-\d+$/i.test(original) &&
+            translateValue(original) === original;
+    }
+
+    function setTranslationStatus(message) {
+        const el = document.getElementById("translationStatus");
+        if (!el) return;
+        el.textContent = message;
+        el.classList.toggle("has-error", Boolean(message));
+    }
+
+    function collectCloudNodes() {
+        const candidates = new Map();
+        if (!publicNewsPage) return candidates;
+        for (const container of document.querySelectorAll("#main-content, .site-header, .site-footer, .news-ticker")) {
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                if (!cloudEligible(node)) continue;
+                const english = originalNodes.get(node).trim();
+                if (!candidates.has(english)) candidates.set(english, []);
+                candidates.get(english).push(node);
+            }
+        }
+        return candidates;
+    }
+
+    async function translatePublicNews(epoch) {
+        if (language !== "de" || !publicNewsPage) return;
+        if (cloudWorking) { cloudRerun = true; return; }
+        cloudWorking = true;
+        try {
+            const candidates = collectCloudNodes();
+            const entries = Array.from(candidates.entries()).slice(0, 220);
+            for (let offset = 0; offset < entries.length; offset += 12) {
+                if (language !== "de" || epoch !== cloudEpoch) return;
+                const chunk = entries.slice(offset, offset + 12);
+                const missing = chunk.filter(([english]) => !cloudTranslations.has(english));
+                if (missing.length) {
+                    let response;
+                    try {
+                        response = await fetch("/api/translate", {
+                            method: "POST", credentials: "same-origin", cache: "no-store",
+                            headers: {"Content-Type": "application/json", "Accept": "application/json"},
+                            body: JSON.stringify({texts: missing.map(([english]) => english)})
+                        });
+                    } catch (_) {
+                        setTranslationStatus("News translation unavailable");
+                        return;
+                    }
+                    if (!response.ok) {
+                        setTranslationStatus(response.status === 503
+                            ? "Google API key needed" : "News translation unavailable");
+                        return;
+                    }
+                    const data = await response.json();
+                    if (!Array.isArray(data.translations) || data.translations.length !== missing.length) return;
+                    missing.forEach(([english], index) => cloudTranslations.set(english, data.translations[index]));
+                }
+                if (language !== "de" || epoch !== cloudEpoch) return;
+                for (const [english, nodes] of chunk) {
+                    const translated = cloudTranslations.get(english);
+                    if (!translated) continue;
+                    for (const node of nodes) {
+                        if (!node.isConnected || originalNodes.get(node)?.trim() !== english) continue;
+                        const original = originalNodes.get(node);
+                        const prefix = original.match(/^\s*/)[0];
+                        const suffix = original.match(/\s*$/)[0];
+                        node.nodeValue = prefix + translated + suffix;
+                    }
+                }
+            }
+            setTranslationStatus("");
+        } finally {
+            cloudWorking = false;
+            if (cloudRerun && language === "de") {
+                cloudRerun = false;
+                scheduleCloudTranslation();
+            }
+        }
+    }
+
+    function scheduleCloudTranslation() {
+        if (language !== "de" || !publicNewsPage) return;
+        clearTimeout(cloudTimer);
+        const epoch = cloudEpoch;
+        cloudTimer = setTimeout(() => translatePublicNews(epoch), 450);
+    }
+
+    function setLanguage(next) {
+        language = next === "de" ? "de" : "en";
+        document.documentElement.lang = language;
+        document.querySelectorAll("[data-lang-choice]").forEach(button => {
+            const selected = button.dataset.langChoice === language;
+            button.classList.toggle("is-current", selected);
+            button.setAttribute("aria-pressed", String(selected));
+        });
+        cloudEpoch++;
+        clearTimeout(cloudTimer);
+        cloudRerun = false;
+        setTranslationStatus("");
+        translateBranch(document.body);
+        formatLocalTimes();
+        scheduleCloudTranslation();
+        try { sessionStorage.setItem(KEY, language); } catch (_) { /* temporary choice only */ }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        let initial = "en";
+        try { initial = sessionStorage.getItem(KEY) === "de" ? "de" : "en"; } catch (_) { /* no storage */ }
+        // A URL with ?lang=de or ?lang=en can also set the active translation.
+        const requested = new URLSearchParams(location.search).get("lang");
+        if (requested === "de" || requested === "en") initial = requested;
+        document.querySelectorAll("[data-lang-choice]").forEach(button => {
+            button.addEventListener("click", () => setLanguage(button.dataset.langChoice));
+        });
+        setLanguage(initial);
+        // Other scripts insert RSS cards asynchronously; translate UI labels when added.
+        const observer = new MutationObserver(records => {
+            for (const record of records) {
+                record.addedNodes.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
+                        translateBranch(node);
+                    }
+                });
+            }
+            scheduleCloudTranslation();
+        });
+        observer.observe(document.body, { subtree: true, childList: true });
+    });
+})();
+
+    </script>
+
+    <!-- Normal link clicks stay in this tab, including RSS article links. -->
+    <script>
+    document.addEventListener("click", function (event) {
+        // Preserve the user's Ctrl/Cmd/Shift+click new-tab choice.
+        if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        if (!(event.target instanceof Element)) return;
+        const link = event.target.closest('a[href][target="_blank"]');
+        if (link) link.removeAttribute("target");
+    }, true);
+    </script>
+</body>
+</html>

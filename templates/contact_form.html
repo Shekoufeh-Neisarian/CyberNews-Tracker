@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Contact | CyberNews Tracker{% endblock %}
+{% block content %}
+<section class="contact-section" aria-labelledby="contact-title">
+    <div class="account-eyebrow"><span class="account-signal" aria-hidden="true"></span> CYBERNEWS / CONTACT</div>
+    <div class="contact-page-heading">
+        <div><span class="account-small-label">SEND A MESSAGE</span>
+        <h1 id="contact-title">Get in touch.</h1>
+        <p>Report a website issue, share feedback or suggest an improvement to CyberNews.</p></div>
+        <div class="contact-page-heading-icon" aria-hidden="true">✉</div>
+    </div>
+    <div class="contact-form-panel">
+      {% if form_error %}<div class="contact-form-error" role="alert">{{ form_error }}</div>{% endif %}
+      <form action="{{ url_for('submit_message') }}" method="post" class="contact-form">
+          <input type="hidden" name="contact_csrf_token" value="{{ form_csrf_token }}">
+          <div class="contact-honeypot" aria-hidden="true">
+            <label for="contact-website">Leave this field empty</label>
+            <input id="contact-website" type="text" name="website" autocomplete="off" tabindex="-1">
+          </div>
+          <div class="form-group">
+              <label for="name">Name</label>
+              <input type="text" id="name" name="name" maxlength="100" minlength="2"
+                     placeholder="Enter your name" value="{{ name or '' }}" required autocomplete="name">
+          </div>
+          <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" maxlength="254"
+                     placeholder="Enter your email address" value="{{ email or '' }}" required autocomplete="email">
+          </div>
+          <div class="form-group">
+              <label for="message">Message</label>
+              <textarea id="message" name="message" rows="6" minlength="5" maxlength="5000"
+                        placeholder="Write your message here..." required>{{ message or '' }}</textarea>
+          </div>
+          <p class="contact-privacy-note">Your message is stored in this website's local database and is accessible only to CyberNews administrators. It is not emailed automatically. Please don't include passwords or confidential information.</p>
+          <button type="submit" class="primary-button">Send Message <span aria-hidden="true">↗</span></button>
+      </form>
+    </div>
+</section>
+{% endblock %}

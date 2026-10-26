@@ -1,0 +1,150 @@
+/* Account identification, RSS subscription, and language toggle.
+   Loaded after style.css; does not change existing PR exercises. */
+.header-actions { gap: 8px; }
+.header-rss-link {
+    display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+    min-height: 34px; padding: 6px 10px; color: #076b85;
+    border: 1px solid #a9d6e5; background: #eaf8fc;
+    border-radius: 7px; text-decoration: none; font: 750 11px/1.2 Consolas, monospace;
+    letter-spacing: .5px; white-space: nowrap;
+}
+.header-rss-link:hover { background: #d5f4fa; border-color: #54bdcf; color: #054d63; }
+.language-switch {
+    display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;
+    border: 1px solid #b4d5e3; background: #f7fcff;
+    border-radius: 7px; padding: 3px 5px; color: #6a8393;
+    font: 700 10px/1.2 Consolas, monospace;
+}
+.language-choice { border: 0; border-radius: 4px; background: transparent; color: #688198;
+    padding: 5px 4px; font: inherit; cursor: pointer; }
+.language-choice.is-current { color: #006e8d; background: #d9f4fa; }
+.language-choice:hover { color: #006e8d; }
+.header-account-chip {
+    display: inline-flex; flex-direction: column; justify-content: center; gap: 3px;
+    min-width: 110px; max-width: 190px; min-height: 43px;
+    padding: 6px 10px 6px 14px; border-radius: 7px;
+    background: #0b121c; color: #f3f6f9; text-decoration: none;
+    border: 1px solid #283340;
+}
+.header-account-chip:hover { background: #17232f; color: #fff; }
+.header-account-name {
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #f5f8fb; font: 650 12px/1.1 'Consolas', 'Courier New', monospace;
+}
+.header-account-role {
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #a9bbcd; letter-spacing: 2px; font: 700 9px/1.1 'Consolas', monospace;
+}
+.site-header .nav-signout-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 38px; padding: 0; color: #526c7f;
+    background: transparent; border: 1px solid transparent; border-radius: 7px; cursor: pointer;
+}
+.site-header .nav-signout-icon:hover { color: #007f9d; border-color: #98ccdd; background: #ebf8fc; }
+.header-rss-link:focus-visible, .language-choice:focus-visible,
+.header-account-chip:focus-visible, .nav-signout-icon:focus-visible {
+    outline: 2px solid #00bccc; outline-offset: 3px;
+}
+html.dark-theme .header-rss-link { background: #173246; border-color: #315d70; color: #a5e6ef; }
+html.dark-theme .language-switch { background: #152a3c; border-color: #345467; color: #8fa4b7; }
+html.dark-theme .language-choice { color: #becdda; }
+html.dark-theme .language-choice.is-current { color: #c6fbff; background: #255068; }
+html.dark-theme .site-header .nav-signout-icon { color: #acc5d6; }
+html.dark-theme .site-header .nav-signout-icon:hover { background: #20374b; color: #fff; }
+@media (max-width: 1040px) {
+    .header-account-chip { max-width: 175px; }
+}
+@media (max-width: 680px) {
+    .header-inner { gap: 10px; }
+    .header-actions { gap: 5px; margin-left: auto; }
+    .header-account-chip { min-width: 0; max-width: 125px; padding: 5px 8px; }
+    .header-account-name { font-size: 10px; }
+    .header-account-role { font-size: 8px; letter-spacing: 1px; }
+    .header-rss-link { padding: 6px 7px; min-height: 31px; }
+    .language-switch { padding: 2px 3px; }
+    #theme-toggle { width: 30px; height: 31px; }
+    .site-header .nav-signout-icon { width: 27px; height: 31px; }
+}
+@media (max-width: 430px) {
+    .brand-wordmark { font-size: 15px; }
+    .brand-mark { width: 30px; height: 30px; }
+    .header-actions { flex-wrap: wrap; justify-content: flex-end; }
+    .header-account-chip { max-width: 105px; }
+}
+
+
+/* Final visual polish: reading progress + real RSS ticker + matched auth actions */
+.reading-progress {
+    position: fixed; top: 0; left: 0; z-index: 5000;
+    height: 3px; width: 0; pointer-events: none;
+    background: linear-gradient(90deg, #0ea5b7, #00c9bd);
+    box-shadow: 0 0 8px rgba(0,180,190,.22);
+    transition: width .07s linear;
+}
+html.dark-theme .reading-progress { background: linear-gradient(90deg,#26b7e8,#24e3c4); }
+.ticker-live-window { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; }
+.ticker-live-track { display: flex; align-items: center; width: max-content; min-height: 36px; }
+.ticker-live-track.is-scrolling { animation: cybernews-news-crawl 64s linear infinite; }
+.ticker-live-window:hover .ticker-live-track,
+.ticker-live-window:focus-within .ticker-live-track { animation-play-state: paused; }
+.ticker-story-group { flex: 0 0 auto; display: flex; align-items: center; }
+.ticker-story { display: inline-flex; align-items: center; gap: 8px; margin-right: 32px;
+    text-decoration: none; color: #385b71; font-size: 11px; font-weight: 500; }
+.ticker-story:hover { color: #087b99; text-decoration: underline; }
+.ticker-story-source { color: #087f98; font: 700 10px Consolas, monospace; letter-spacing: .3px; }
+.ticker-placeholder { color: #637f92; font-size: 11px; }
+@keyframes cybernews-news-crawl { to { transform: translateX(-50%); } }
+html.dark-theme .ticker-story {color:#d2e5f2;}
+html.dark-theme .ticker-story-source {color:#65d6e2;}
+html.dark-theme .ticker-placeholder {color:#a1c2d2;}
+@media(prefers-reduced-motion: reduce) {
+    .ticker-live-track.is-scrolling { animation: none; width: auto; }
+    .ticker-live-window { overflow-x: auto; }
+    .reading-progress { transition: none; }
+}
+/* Both account actions share shape, size and border system. */
+.site-header .header-actions .header-register,
+.site-header .header-actions .header-sign-in {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 35px; border-radius: 7px; padding: 8px 12px;
+    white-space: nowrap; font-size: 12px; font-weight: 750;
+    text-decoration: none; transition: background .16s, border-color .16s;
+}
+.site-header .header-actions .header-sign-in {
+    background: #f5fbfe; border: 1px solid #b8d5e2; color: #1d536d;
+}
+.site-header .header-actions .header-register {
+    color: #fff; border: 1px solid #087ea0; background: #078eaf;
+}
+.site-header .header-actions .header-register:hover,
+.site-header .header-actions .header-register.active {
+    background: #076f8e; border-color: #076f8e; color: #fff;
+}
+.site-header .header-actions .header-sign-in:hover,
+.site-header .header-actions .header-sign-in.active {
+    background: #e2f6fb; border-color: #56bcd0; color: #006c88;
+}
+html.dark-theme .site-header .header-actions .header-register {
+    background:#16a4bd; border-color:#16a4bd; color:#071b28;
+}
+html.dark-theme .site-header .header-actions .header-register:hover,
+html.dark-theme .site-header .header-actions .header-register.active {
+    background:#55d8e6; border-color:#55d8e6;
+}
+html.dark-theme .site-header .header-actions .header-sign-in {
+    background:#172d40; border-color:#436579; color:#e1f4fa;
+}
+html.dark-theme .site-header .header-actions .header-sign-in:hover,
+html.dark-theme .site-header .header-actions .header-sign-in.active {
+    background:#254b60; border-color:#58a4b4; color:#fff;
+}
+@media (max-width: 680px) {
+    .ticker-link { display:none; }
+    .ticker-live-track { min-height: 32px; }
+    .ticker-story { font-size: 10px; }
+    .site-header .header-actions .header-register,
+    .site-header .header-actions .header-sign-in {min-height:32px; padding: 6px 9px; font-size:11px;}
+}
+
+.password-guidance {display:block;margin-top:6px;color:#56768a;font-size:11px;line-height:1.55;}
+html.dark-theme .password-guidance {color:#50788b;}

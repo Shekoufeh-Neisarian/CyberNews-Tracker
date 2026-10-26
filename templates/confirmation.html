@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Message Confirmation | CyberNews Tracker{% endblock %}
+{% block content %}
+<section class="confirmation-section">
+    <div class="confirmation-card">
+        <div class="confirmation-icon">✓</div>
+        <h2>Message saved</h2>
+        <p>Thanks for reaching out, <span class="contact-personal">{{ name }}</span>! Your message was saved locally and can now be reviewed in the CyberNews Admin Console.</p>
+        <div class="message-details">
+            <h3>Your submission</h3>
+            <p><strong>Name:</strong> <span class="contact-personal">{{ name }}</span></p>
+            <p><strong>Email:</strong> <span class="contact-personal">{{ email }}</span></p>
+            <p><strong>Message:</strong></p>
+            <p class="submitted-message contact-personal">{{ message }}</p>
+        </div>
+        <a href="{{ url_for('home') }}" class="primary-button">Back to Home</a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My Account | CyberNews Tracker{% endblock %}
+{% block content %}
+<section class="account-space" aria-labelledby="dashboard-heading">
+  <div class="account-eyebrow"><span class="account-signal"></span> YOUR CYBERNEWS DESK / ACCOUNT OVERVIEW</div>
+  <div class="account-hero">
+    <div>
+      <p class="account-small-label">PERSONAL BRIEFING</p>
+      <h1 id="dashboard-heading">Welcome back, <span>{{ account['display_name'] }}</span>.</h1>
+      <p class="account-hero-description">Your cybersecurity reading space, saved stories, and account activity, all in one place.</p>
+      <div class="account-tags"><span class="account-title-tag">{{ account['profile_title'] }}</span><span class="account-role-tag">{{ 'Administrator' if account['access_role'] == 'admin' else 'Member' }} access</span></div>
+    </div>
+    <div class="account-hero-stamp"><span>CN</span><small>CYBERNEWS<br>MEMBER</small></div>
+  </div>
+
+  <div class="account-metrics" aria-label="Your account at a glance">
+    <div class="account-metric"><span>MEMBER SINCE</span><strong><time class="berlin-datetime" data-utc="{{ account['registered_at'] }}">{{ account['registered_at'][:10] }}</time></strong><small>Account registration</small></div>
+    <div class="account-metric"><span>LATEST SIGN-IN</span><strong>{% if account['last_login_at'] %}<time class="berlin-datetime" data-utc="{{ account['last_login_at'] }}">{{ account['last_login_at'][:16] }}</time>{% else %}Not yet{% endif %}</strong><small>Berlin local time</small></div>
+    <div class="account-metric"><span>SAVED ARTICLES</span><strong>{{ bookmark_count }}</strong><small>Your personal collection</small></div>
+    <div class="account-metric"><span>SIGN-INS</span><strong>{{ account['login_count'] }}</strong><small>Recorded by this app</small></div>
+  </div>
+
+  <div class="account-two-column">
+    <div class="account-panel">
+      <div class="account-panel-heading"><span class="account-small-label">01 / YOUR WORKSPACE</span><h2>Continue your research</h2><p>A few useful places to start. No extra features to learn all at once.</p></div>
+      <a class="account-action-link" href="{{ url_for('news') }}"><span class="account-action-icon">↗</span><span><strong>Explore latest news</strong><small>Live cybersecurity articles and filters</small></span><b>→</b></a>
+      <a class="account-action-link" href="{{ url_for('bookmarks_page') }}"><span class="account-action-icon">☆</span><span><strong>Saved reading list</strong><small>Find what you bookmarked earlier</small></span><b>→</b></a>
+      {% if account['access_role'] == 'admin' %}
+      <a class="account-action-link" href="{{ url_for('admin_dashboard') }}"><span class="account-action-icon">⚙</span><span><strong>Account administration</strong><small>Review roles and sign-in activity</small></span><b>→</b></a>
+      {% else %}
+      <a class="account-action-link" href="https://thehackernews.com/p/upcoming-hacker-news-webinars.html" target="_blank" rel="noopener noreferrer"><span class="account-action-icon">◉</span><span><strong>Security webinars</strong><small>Explore learning opportunities from The Hacker News</small></span><b>↗</b></a>
+      {% endif %}
+    </div>
+    <div class="account-panel">
+      <div class="account-panel-heading"><span class="account-small-label">02 / SECURITY ACTIVITY</span><h2>Your sign-in history</h2><p>Only your account activity is shown here.</p></div>
+      <div class="account-activity">
+        {% for item in activity %}
+        <div class="account-activity-row"><span class="account-activity-dot"></span><div><strong>Successful sign-in</strong><small><time class="berlin-datetime" data-utc="{{ item['logged_in_at'] }}">{{ item['logged_in_at'] }}</time></small></div>{% if loop.first %}<span class="account-activity-now">LATEST</span>{% endif %}</div>
+        {% else %}
+        <p class="account-empty">No sign-ins recorded yet.</p>
+        {% endfor %}
+      </div>
+      <div class="account-previous">Previous sign-in: <strong>{% if account['previous_login_at'] %}<time class="berlin-datetime" data-utc="{{ account['previous_login_at'] }}">{{ account['previous_login_at'] }}</time>{% else %}This is your first recorded sign-in{% endif %}</strong></div>
+    </div>
+  </div>
+  <div class="account-learning">
+    <div><span class="account-small-label">LEARNING CORNER / EXTERNAL RESOURCE</span><h2>Keep up with security research</h2><p>Explore upcoming and recorded cybersecurity webinars from The Hacker News. This is an external resource, not a CyberNews booking feature.</p></div>
+    <a href="https://thehackernews.com/p/upcoming-hacker-news-webinars.html" target="_blank" rel="noopener noreferrer">Explore webinars ↗</a>
+  </div>
+</section>
+{% endblock %}
