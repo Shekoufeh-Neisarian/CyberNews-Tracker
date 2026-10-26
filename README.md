@@ -4,29 +4,65 @@
 
 CyberNews Tracker brings headlines from established cybersecurity publishers into one responsive news reader. Visitors can discover and filter stories, read the original reporting, and switch the interface between English and German. Registered members can save articles, while administrators can manage user access and review messages submitted through the Contact form.
 
-**Developed by Shekoufeh Neisarian**   
+**Developed by Shekoufeh Neisarian**  
 **Source code:** https://github.com/Shekoufeh-Neisarian/CyberNews-Tracker
 
-> \*\*Running the project:\*\* This repository contains a locally runnable Flask application, not a publicly hosted website. Follow the steps below, start `python web\_app.py`, and visit \*\*http://127.0.0.1:5000\*\*.
+> \*\*Running the project:\*\* This repository contains a locally runnable Flask application, not a publicly hosted website. Follow the steps below, start `python web\_app.py`, and open `http://127.0.0.1:5000` in your own browser.
 
-!\[CyberNews architecture and features](docs/architecture-and-features.png)
+## Project structure
 
-*The diagram provides a high-level overview. The database filename used by the actual application is **`cybernews\_bookmarks.db`**.*
+This is the folder structure of the submitted application. Keep the `templates/` and `static/` folders in these locations so Flask can find the pages and assets.
 
-## Contents
+```text
+CyberNews-Tracker/
+├── web\_app.py                       # Flask backend: routes, APIs, news, forms and sessions
+├── cybernews\_bookmarks.db           # SQLite demonstration data (review before publishing)
+├── requirements.txt                # Python dependency: Flask
+├── README.md                       # Installation, architecture and user guide
+├── LICENSE                         # Repository license
+├── .gitignore                      # Ignore local environments and secrets
+├── .env.example                    # Placeholder variable names, no real API key
+├── templates/                      # HTML/Jinja pages (13 files)
+│   ├── base.html                   # Shared layout, navigation, languages and cookie banner
+│   ├── index.html                  # Home and featured news
+│   ├── news.html                   # Latest News and category filtering
+│   ├── login.html                  # Sign in
+│   ├── register.html               # Sign up
+│   ├── user\_dashboard.html         # Member account activity
+│   ├── admin\_dashboard.html        # Roles, login statistics and Contact inbox
+│   ├── bookmarks.html              # Saved articles
+│   ├── contact\_form.html           # Visitor feedback form
+│   ├── confirmation.html           # Contact submission confirmation
+│   ├── access\_denied.html          # 403 permission-denied page
+│   ├── intelligence.html           # Separate protected-API classroom exercise
+│   └── cookie\_check.html          # Separate HttpOnly cookie classroom exercise
+├── static/
+│   ├── style.css                   # Responsive layout and light/dark styles
+│   ├── script.js                   # News interactions, ticker, theme and progress bar
+│   ├── language.js                 # Language support from earlier implementation
+│   ├── language.css                # Language-related styling
+│   └── images/
+│       └── cyber-hero.svg          # Globe/network artwork for Latest News
+├── docs/
+│   ├── architecture-and-features.png
+│   └── WORKFLOWS\_AND\_DEMO.md
+└── screenshots/
+    ├── 01-home-dark.png  …  13-contact-form.png   # 13 real website screenshots
+    └── README.md                   # Screenshot descriptions
+```
 
-* [Quick start — Windows](#quick-start--windows)
-* [Project overview](#project-overview)
-* [Features](#features)
-* [Architecture and technologies](#architecture-and-technologies)
-* [How the main workflows work](#how-the-main-workflows-work)
-* [SQLite database](#sqlite-database)
-* [Security and privacy](#security-and-privacy)
-* [Google Translate configuration](#google-translate-configuration)
-* [Project structure](#project-structure)
-* [Screenshots](#screenshots)
-* [Demonstration checklist](#demonstration-checklist)
-* [Troubleshooting](#troubleshooting)
+The `intelligence.html` and `cookie\_check.html` files remain because we kept their educational Flask routes. They are separate demonstrations; the main news site, consent banner and account security work independently of those pages.
+
+### Main application files explained
+
+|File/folder|What it does|
+|-|-|
+|`web\_app.py`|Processes HTTP requests; reads RSS feeds; validates forms; checks accounts and permissions; communicates with SQLite and Google Translation.|
+|`templates/`|Renders the browser pages using HTML and Jinja. `base.html` supplies the common header, navigation and footer.|
+|`static/`|Contains browser-side CSS, JavaScript and the cyber-globe SVG.|
+|`cybernews\_bookmarks.db`|Holds the local demo users, bookmarks, login events, Contact messages and caches.|
+|`docs/`|Stores architecture visual and step-by-step workflow guide.|
+|`screenshots/`|Shows the actual website in English/German and light/dark mode, including user and administrator views.|
 
 ## Quick start — Windows
 
@@ -69,13 +105,13 @@ python web\_app.py
 
 When the terminal displays `Running on http://127.0.0.1:5000`, open:
 
-**http://127.0.0.1:5000**
+`http://127.0.0.1:5000`
 
 Leave PowerShell running while you use the website. Press **Ctrl+C** to stop the Flask server.
 
 ### 5\. Try the demonstration accounts
 
-The application creates these **local classroom accounts** if they do not already exist in the database:
+When starting from a **new database**, the application creates these local classroom accounts. An existing demonstration database may contain updated account records or passwords:
 
 |Access|Username|Password|Where it leads|
 |-|-|-|-|
@@ -141,8 +177,8 @@ News stories are sourced from publisher feeds and link to the **original publish
 ### Interface, languages and privacy controls
 
 * Responsive, cybersecurity-themed pages designed with **HTML/Jinja, CSS, and JavaScript**.
-* **Light and dark themes** with consistent navigation between pages.
-* **EN/DE language selector**: built-in interface translations and Google Cloud Translation for dynamic public news text when configured.
+* **Light and dark themes**; the theme selection is restored during page navigation using cookie/session-storage logic.
+* **EN/DE language selector**: predefined interface labels are localized in the browser; dynamic public news text is translated through the Flask/Google Cloud integration when configured.
 * **Cookie consent banner** with **Essential only** and an optional theme preference.
 * A selected theme can persist within the current browser tab; with optional consent, a theme cookie can remember the choice across sessions.
 * **Colorful scroll-progress bar** at the top of the page: **pink → purple → blue → turquoise → mint green**. JavaScript updates its filled width according to scroll position.
@@ -150,7 +186,7 @@ News stories are sourced from publisher feeds and link to the **original publish
 
 ## Architecture and technologies
 
-The application follows a simple **browser → Flask → data/services** design.
+The application follows a simple **browser → Flask → data/services** design. The flowchart below is the accurate reference for component names and data flow. The accompanying [architecture infographic](docs/architecture-and-features.png) is a visual overview; its exported image still abbreviates the database name as `cybernews.db` and describes the progress bar as article-only. In the running app, the database is **`cybernews\_bookmarks.db`** and the progress bar is part of the shared site layout.
 
 ```mermaid
 flowchart LR
@@ -321,30 +357,6 @@ Other configuration options:
 |`NEWS\_API\_KEY`|Optional NewsAPI classroom endpoint, separate from the primary RSS feed.|
 |`COOKIE\_SECURE`|For local HTTP keep `0`; set `1` for a correctly configured HTTPS deployment.|
 |`FLASK\_DEBUG`|Keep disabled (`0`) during regular demonstrations.|
-
-## Project structure
-
-```text
-CyberNews-Tracker/
-├── web\_app.py                    # Main Python/Flask application
-├── cybernews\_bookmarks.db        # Optional sanitized demonstration database
-├── requirements.txt             # Python dependencies
-├── .gitignore                   # Ignore environments, secrets and other local files
-├── .env.example                 # Configuration variable names (no real secrets)
-├── templates/                   # Jinja/HTML pages: news, login, dashboards, Contact...
-├── static/
-│   ├── style.css                # Layout, colors, responsive and themed styling
-│   ├── script.js                # Browser interactions and RSS presentation
-│   └── images/
-│       └── cyber-hero.svg       # Cyber-intelligence hero artwork
-├── docs/
-│   ├── architecture-and-features.png
-│   └── WORKFLOWS\_AND\_DEMO.md
-├── screenshots/                 # 13 screenshots from the working application
-└── README.md
-```
-
-The `templates/` and `static/` folders must be preserved when cloning or copying the project because Flask expects those folder names.
 
 ## Screenshots
 
