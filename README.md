@@ -8,8 +8,8 @@ A responsive cybersecurity news website built with **Python, Flask, SQLite, HTML
 
 ```text
 CyberNews-Tracker/
-├── web_app.py                   # Flask routes, RSS, APIs, authentication
-├── cybernews_bookmarks.db       # SQLite demonstration database
+├── web_app.py                  # Flask routes, RSS, APIs, authentication
+├── cybernews_bookmarks.db      # SQLite demonstration database
 ├── requirements.txt            # Python dependencies
 ├── templates/                  # 13 HTML/Jinja pages
 │   ├── base.html               # Shared layout, navigation and cookie banner
@@ -17,8 +17,8 @@ CyberNews-Tracker/
 │   ├── news.html               # Latest News
 │   ├── login.html              # Sign in
 │   ├── register.html           # Registration
-│   ├── user_dashboard.html      # Member account
-│   ├── admin_dashboard.html     # Admin Console and Contact inbox
+│   ├── user_dashboard.html     # Member account
+│   ├── admin_dashboard.html    # Admin Console and Contact inbox
 │   ├── bookmarks.html          # Saved stories
 │   ├── contact_form.html       # Contact form
 │   ├── confirmation.html       # Submission confirmation
