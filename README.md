@@ -15,8 +15,8 @@ This is the folder structure of the submitted application. Keep the `templates/`
 
 ```text
 CyberNews-Tracker/
-├── web\_app.py                       # Flask backend: routes, APIs, news, forms and sessions
-├── cybernews\_bookmarks.db           # SQLite demonstration data (review before publishing)
+├── web\_app.py                     # Flask backend: routes, APIs, news, forms and sessions
+├── cybernews\_bookmarks.db         # SQLite demonstration data 
 ├── requirements.txt                # Python dependency: Flask
 ├── README.md                       # Installation, architecture and user guide
 ├── LICENSE                         # Repository license
@@ -28,12 +28,12 @@ CyberNews-Tracker/
 │   ├── news.html                   # Latest News and category filtering
 │   ├── login.html                  # Sign in
 │   ├── register.html               # Sign up
-│   ├── user\_dashboard.html         # Member account activity
-│   ├── admin\_dashboard.html        # Roles, login statistics and Contact inbox
+│   ├── user\_dashboard.html        # Member account activity
+│   ├── admin\_dashboard.html       # Roles, login statistics and Contact inbox
 │   ├── bookmarks.html              # Saved articles
-│   ├── contact\_form.html           # Visitor feedback form
+│   ├── contact\_form.html          # Visitor feedback form
 │   ├── confirmation.html           # Contact submission confirmation
-│   ├── access\_denied.html          # 403 permission-denied page
+│   ├── access\_denied.html         # 403 permission-denied page
 │   ├── intelligence.html           # Separate protected-API classroom exercise
 │   └── cookie\_check.html          # Separate HttpOnly cookie classroom exercise
 ├── static/
@@ -47,11 +47,11 @@ CyberNews-Tracker/
 │   ├── architecture-and-features.png
 │   └── WORKFLOWS\_AND\_DEMO.md
 └── screenshots/
-    ├── 01-home-dark.png  …  13-contact-form.png   # 13 real website screenshots
+    ├── 01-home-dark.png  …  13-contact-form.png   # Website screenshots
     └── README.md                   # Screenshot descriptions
 ```
 
-The `intelligence.html` and `cookie\_check.html` files remain because we kept their educational Flask routes. They are separate demonstrations; the main news site, consent banner and account security work independently of those pages.
+The `intelligence.html` and `cookie\_check.html` files are separate demonstrations; the main news site, consent banner and account security work independently of those pages.
 
 ### Main application files explained
 
